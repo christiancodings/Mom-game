@@ -19,6 +19,28 @@ function shell(content) {
   return `<section class="card stack">${content}</section>`;
 }
 
+const githubPagesBasePath = (() => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  if (!window.location.hostname.endsWith("github.io")) {
+    return "";
+  }
+  const firstSegment = window.location.pathname.split("/").filter(Boolean)[0];
+  return firstSegment ? `/${firstSegment}` : "";
+})();
+
+function withAssetBasePath(path) {
+  const withLeadingSlash = path.startsWith("/") ? path : `/${path}`;
+  if (!githubPagesBasePath) {
+    return withLeadingSlash;
+  }
+  if (withLeadingSlash.startsWith(`${githubPagesBasePath}/`)) {
+    return withLeadingSlash;
+  }
+  return `${githubPagesBasePath}${withLeadingSlash}`;
+}
+
 function toAssetSrc(path) {
   if (!path) {
     return "";
@@ -26,8 +48,8 @@ function toAssetSrc(path) {
   if (path.startsWith("blob:") || path.startsWith("data:")) {
     return path;
   }
-  const withLeadingSlash = path.startsWith("/") ? path : `/${path}`;
-  return withLeadingSlash
+  const withBasePath = withAssetBasePath(path);
+  return withBasePath
     .split("/")
     .map((segment, idx) => (idx === 0 ? segment : encodeURIComponent(segment)))
     .join("/");

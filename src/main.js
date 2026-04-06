@@ -29,16 +29,38 @@ const AUTO_LEVEL4_TEST = false;
 let level1PreloadPromise = null;
 let level4PreloadPromise = null;
 
-function toPreloadUrl(path) {
+const githubPagesBasePath = (() => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  if (!window.location.hostname.endsWith("github.io")) {
+    return "";
+  }
+  const firstSegment = window.location.pathname.split("/").filter(Boolean)[0];
+  return firstSegment ? `/${firstSegment}` : "";
+})();
+
+function withAssetBasePath(path) {
   const withLeadingSlash = path.startsWith("/") ? path : `/${path}`;
-  return withLeadingSlash
+  if (!githubPagesBasePath) {
+    return withLeadingSlash;
+  }
+  if (withLeadingSlash.startsWith(`${githubPagesBasePath}/`)) {
+    return withLeadingSlash;
+  }
+  return `${githubPagesBasePath}${withLeadingSlash}`;
+}
+
+function toPreloadUrl(path) {
+  const withBasePath = withAssetBasePath(path);
+  return withBasePath
     .split("/")
     .map((segment, idx) => (idx === 0 ? segment : encodeURIComponent(segment)))
     .join("/");
 }
 
 function toRawAssetUrl(path) {
-  return path.startsWith("/") ? path : `/${path}`;
+  return withAssetBasePath(path);
 }
 
 async function fetchWithTimeout(url, timeoutMs = 7000) {
